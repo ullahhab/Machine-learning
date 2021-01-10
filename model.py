@@ -14,7 +14,7 @@ X_test = X_test.reshape(X_test.shape[0],28,28,1)
 
 
 
-def CNN(x_train,y_train,x_test,y_test):
+def CNN(x_train,y_train,x_test,y_test,thres):
     model = Sequential()
     model.add(Conv2D(32,(3,3), activation='relu', input_shape=(28,28,1)))
     model.add(MaxPooling2D(2,2))
@@ -25,7 +25,7 @@ def CNN(x_train,y_train,x_test,y_test):
     model.compile(loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     model.fit(x_train,y_train, epochs=10, batch_size=32,verbose=0)
     true=[0,0,0,0,0,0,0,0,0,0]
-    accuracy=[0,0,0,0,0,0,0,0,0,0]
+    accuracy=0
 
     for i in range(len(x_test)):
         y_pre = model.predict(x_test[i].reshape(1,28,28,1))
@@ -33,7 +33,10 @@ def CNN(x_train,y_train,x_test,y_test):
         #print(test)
         true[test] += 1
         for y in range(len(y_pre[0])):
-            accuracy[y]+=y_pre[0][y] 
+            if (thres <= y_pre[0][y]) and (test==y):
+                accuracy+=1
+                #print("true = ",true,"y_pred = ",y_pre[0][y],"thres = ",thres)
+
         #print("accuracy = ", accuracy,"y_pred = ", y_pre, "true =", true)
     return accuracy, true
 
@@ -46,6 +49,7 @@ def RandomSample(X_train, Y_train, X_test,Y_test):
         filename = filename+str(i)
         x_train =[]
         y_train = []
+        threshold = random.random()
         print("Generating Sample",i)
         if i%10==0:
             perc+=0.1
@@ -57,12 +61,12 @@ def RandomSample(X_train, Y_train, X_test,Y_test):
 
         x_train = np.array(x_train)
         y_train = np.array(y_train)
-        accuracy,true =CNN(x_train,y_train,X_test,Y_test)
-        SaveToFile(filename,x_train,y_train,accuracy, true)
+        accuracy,true =CNN(x_train,y_train,X_test,Y_test,threshold)
+        SaveToFile(filename,x_train,y_train,accuracy,true, threshold, X_test.shape[0])
 
 
 
-def SaveToFile(filename, x_train, y_train, accuracy, true):
+def SaveToFile(filename, x_train, y_train, accuracy, true, thres,le):
     data = open(filename+'.txt','w')
     result = open(filename+'res.txt','w')
 
@@ -70,9 +74,9 @@ def SaveToFile(filename, x_train, y_train, accuracy, true):
         data.write(str(x_train[i]))
     for i in range(len(y_train)):
         data.write(str(y_train[i])+'\n')
-    for i in range(len(accuracy)):
-        #print("done Writing")
-        result.write("accuracy = "+str(accuracy[i])+" true = " +str(true[i])+'\n')
+
+    #result.write("accuracy = "+str(accuracy)+" total = " +str(le)+" percentage = "+str(accuracy\le)+"threshold = "+str(thres)+"true = "+str(true)+'\n')
+    result.write("accuracy = " +str(accuracy)+"total = "+str(le)+"precentage = "+str(accuracy/le)+"threshold = "+str(thres)+"true = "+str(true)+'\n')
     data.close()
     result.close()
         
